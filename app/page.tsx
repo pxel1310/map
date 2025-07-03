@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import dynamic from 'next/dynamic'
-import { Menu, Upload, Download, Edit3, Globe, X, Ruler } from 'lucide-react'
+import { Menu, Upload, Download, Edit3, Globe, Ruler } from 'lucide-react'
 
 // Importar componentes dinámicamente
 const MapEditor = dynamic(() => import('./components/map-editor'), {
@@ -25,16 +25,19 @@ const LayerPropertiesPanel = dynamic(
   },
 )
 
-const AdvancedDrawingTools = dynamic(
-  () => import('./components/advanced-drawing-tools'),
+const MobileDrawingTools = dynamic(
+  () => import('./components/mobile-drawing-tools'),
   {
     ssr: false,
   },
 )
 
-const LayerManager = dynamic(() => import('./components/layer-manager'), {
-  ssr: false,
-})
+const MobileLayerManager = dynamic(
+  () => import('./components/mobile-layer-manager'),
+  {
+    ssr: false,
+  },
+)
 
 interface MapLayer {
   id: string
@@ -59,7 +62,8 @@ export default function KMLMapEditor() {
   const [layers, setLayers] = useState<MapLayer[]>([])
   const [folders, setFolders] = useState<LayerFolder[]>([])
   const [selectedTool, setSelectedTool] = useState<string>('select')
-  const [showSidebar, setShowSidebar] = useState(false)
+  const [showBottomPanel, setShowBottomPanel] = useState(false)
+  const [activeBottomTab, setActiveBottomTab] = useState('layers')
   const [showFileDropZone, setShowFileDropZone] = useState(false)
   const [showWelcome, setShowWelcome] = useState(true)
   const [selectedLayerForProperties, setSelectedLayerForProperties] =
@@ -148,136 +152,33 @@ export default function KMLMapEditor() {
   }
 
   return (
-    <div className="relative flex h-screen bg-land-light">
-      {/* Botón de menú hamburguesa con estilo mejorado */}
-      <button
-        className="fixed left-6 top-6 z-40 flex h-12 w-12 items-center justify-center rounded-lg border border-land-secondary/30 bg-land-primary/95 text-land-light shadow-lg backdrop-blur-sm transition-all duration-300 hover:bg-land-tertiary"
-        onClick={() => setShowSidebar(!showSidebar)}
-      >
-        <Menu className="h-5 w-5" />
-      </button>
-
-      {/* Botón de importar archivo */}
-      <button
-        className="fixed right-6 top-6 z-40 flex h-12 w-12 items-center justify-center rounded-lg border border-land-secondary/30 bg-land-primary/95 text-land-light shadow-lg backdrop-blur-sm transition-all duration-300 hover:bg-land-tertiary"
-        onClick={() => setShowFileDropZone(true)}
-      >
-        <Upload className="h-5 w-5" />
-      </button>
-
-      {/* Panel lateral expandido */}
-      <div
-        className={`brand-sidebar fixed left-0 top-0 z-30 h-full w-[480px] transform shadow-2xl transition-transform duration-500 ease-out ${
-          showSidebar ? 'translate-x-0' : '-translate-x-full'
-        }`}
-      >
-        {/* Header del sidebar con logo */}
-        <div className="relative border-b-2 border-land-secondary/30 p-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="brand-map-icon"></div>
-              <div>
-                <h1 className="brand-title-main text-xl font-bold text-land-light">
-                  THE LAND BUSINESS
-                </h1>
-                <p className="brand-subtitle text-sm text-land-secondary">
-                  TULUM
-                </p>
-              </div>
-            </div>
-            <button
-              className="rounded-lg p-2 text-land-light transition-colors hover:bg-land-light/10"
-              onClick={() => setShowSidebar(false)}
-            >
-              <X className="h-5 w-5" />
-            </button>
-          </div>
-          <div className="mt-4">
-            <h2 className="brand-title-main text-lg text-land-secondary">
-              Map Editor Pro
-            </h2>
-            <p className="brand-body text-xs text-land-light/70">
-              Editor profesional de mapas KML avanzado
-            </p>
+    <div className="relative flex h-screen flex-col overflow-hidden bg-land-light">
+      {/* Header móvil */}
+      <div className="z-30 flex items-center justify-between border-b border-land-secondary/30 bg-land-primary/95 p-4 backdrop-blur-sm">
+        <div className="flex items-center gap-3">
+          <img src="/logo_st.png" alt="Logo" className="h-6 w-6 rounded-full" />
+          <div>
+            <h1 className="brand-title-main text-sm font-bold text-land-light">
+              THE LAND BUSINESS
+            </h1>
+            <p className="brand-subtitle text-xs text-land-secondary">TULUM</p>
           </div>
         </div>
-
-        <div className="h-full space-y-4 overflow-y-auto p-4 pb-20">
-          {/* Administrador de capas avanzado */}
-          <LayerManager
-            layers={layers}
-            folders={folders}
-            onToggleLayerVisibility={toggleLayerVisibility}
-            onRemoveLayer={removeLayer}
-            onOpenLayerProperties={setSelectedLayerForProperties}
-            onCreateFolder={createFolder}
-            onToggleFolder={toggleFolder}
-            onMoveLayerToFolder={moveLayerToFolder}
-          />
-
-          {/* Herramientas de dibujo avanzadas */}
-          <AdvancedDrawingTools
-            selectedTool={selectedTool}
-            onToolChange={setSelectedTool}
-            onCreateFolder={createFolder}
-            onMeasureDistance={handleMeasureDistance}
-            onMeasureArea={handleMeasureArea}
-          />
-
-          {/* Botones de acción */}
-          <div className="space-y-3">
-            <button
-              onClick={() => setShowFileDropZone(true)}
-              className="brand-button-secondary flex w-full items-center justify-center gap-3 rounded-lg p-3"
-            >
-              <Upload className="h-4 w-4" />
-              <span className="brand-body">Importar KML/KMZ</span>
-            </button>
-
-            <button
-              onClick={exportKML}
-              className="brand-button-primary flex w-full items-center justify-center gap-3 rounded-lg p-3"
-            >
-              <Download className="h-4 w-4" />
-              <span className="brand-body">Exportar Proyecto</span>
-            </button>
-          </div>
-
-          {/* Información del proyecto */}
-          <div className="brand-card-elegant rounded-xl p-4">
-            <h4 className="brand-title-main mb-2 font-semibold text-land-primary">
-              Información del Proyecto
-            </h4>
-            <div className="brand-body space-y-2 text-sm text-land-tertiary">
-              <div className="flex justify-between">
-                <span>Capas totales:</span>
-                <span>{layers.length}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Carpetas:</span>
-                <span>{folders.length}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Elementos totales:</span>
-                <span>
-                  {layers.reduce(
-                    (acc, layer) => acc + (layer.features?.length || 0),
-                    0,
-                  )}
-                </span>
-              </div>
-            </div>
-          </div>
+        <div className="flex items-center gap-2">
+          <button
+            className="flex h-10 w-10 items-center justify-center rounded-lg bg-land-light/20 text-land-light transition-all duration-300 hover:bg-land-light/30"
+            onClick={() => setShowFileDropZone(true)}
+          >
+            <Upload className="h-5 w-5" />
+          </button>
+          <button
+            className="flex h-10 w-10 items-center justify-center rounded-lg bg-land-light/20 text-land-light transition-all duration-300 hover:bg-land-light/30"
+            onClick={() => setShowBottomPanel(!showBottomPanel)}
+          >
+            <Menu className="h-5 w-5" />
+          </button>
         </div>
       </div>
-
-      {/* Overlay para cerrar sidebar */}
-      {showSidebar && (
-        <div
-          className="fixed inset-0 z-20 bg-black/60 backdrop-blur-sm"
-          onClick={() => setShowSidebar(false)}
-        />
-      )}
 
       {/* Área del mapa */}
       <div className="relative flex-1">
@@ -289,68 +190,205 @@ export default function KMLMapEditor() {
         />
       </div>
 
-      {/* Modal de bienvenida mejorado */}
+      {/* Panel inferior móvil */}
+      <div
+        className={`fixed bottom-0 left-0 right-0 z-40 transform border-t-2 border-land-secondary/30 bg-white transition-transform duration-300 ease-out ${
+          showBottomPanel ? 'translate-y-0' : 'translate-y-full'
+        }`}
+        style={{ height: '60vh' }}
+      >
+        {/* Handle para arrastrar */}
+        <div className="flex justify-center bg-land-light/50 py-2">
+          <button
+            onClick={() => setShowBottomPanel(!showBottomPanel)}
+            className="h-1 w-12 rounded-full bg-land-tertiary/50"
+          />
+        </div>
+
+        {/* Tabs del panel inferior */}
+        <div className="flex border-b border-land-secondary/30">
+          <button
+            className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+              activeBottomTab === 'layers'
+                ? 'border-b-2 border-land-primary bg-land-light/50 text-land-primary'
+                : 'text-land-tertiary'
+            }`}
+            onClick={() => setActiveBottomTab('layers')}
+          >
+            Capas
+          </button>
+          <button
+            className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+              activeBottomTab === 'tools'
+                ? 'border-b-2 border-land-primary bg-land-light/50 text-land-primary'
+                : 'text-land-tertiary'
+            }`}
+            onClick={() => setActiveBottomTab('tools')}
+          >
+            Herramientas
+          </button>
+          <button
+            className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+              activeBottomTab === 'info'
+                ? 'border-b-2 border-land-primary bg-land-light/50 text-land-primary'
+                : 'text-land-tertiary'
+            }`}
+            onClick={() => setActiveBottomTab('info')}
+          >
+            Info
+          </button>
+        </div>
+
+        {/* Contenido del panel inferior */}
+        <div className="flex-1 overflow-y-auto p-4">
+          {activeBottomTab === 'layers' && (
+            <MobileLayerManager
+              layers={layers}
+              folders={folders}
+              onToggleLayerVisibility={toggleLayerVisibility}
+              onRemoveLayer={removeLayer}
+              onOpenLayerProperties={setSelectedLayerForProperties}
+              onCreateFolder={createFolder}
+              onToggleFolder={toggleFolder}
+              onMoveLayerToFolder={moveLayerToFolder}
+            />
+          )}
+
+          {activeBottomTab === 'tools' && (
+            <MobileDrawingTools
+              selectedTool={selectedTool}
+              onToolChange={setSelectedTool}
+              onCreateFolder={createFolder}
+              onMeasureDistance={handleMeasureDistance}
+              onMeasureArea={handleMeasureArea}
+            />
+          )}
+
+          {activeBottomTab === 'info' && (
+            <div className="space-y-4">
+              <div className="rounded-xl bg-land-light/50 p-4">
+                <h4 className="brand-title-main mb-3 font-semibold text-land-primary">
+                  Información del Proyecto
+                </h4>
+                <div className="brand-body space-y-3 text-sm text-land-tertiary">
+                  <div className="flex items-center justify-between">
+                    <span>Capas totales:</span>
+                    <span className="font-medium text-land-primary">
+                      {layers.length}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>Carpetas:</span>
+                    <span className="font-medium text-land-primary">
+                      {folders.length}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>Elementos totales:</span>
+                    <span className="font-medium text-land-primary">
+                      {layers.reduce(
+                        (acc, layer) => acc + (layer.features?.length || 0),
+                        0,
+                      )}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <button
+                  onClick={() => setShowFileDropZone(true)}
+                  className="brand-button-secondary flex w-full items-center justify-center gap-3 rounded-xl p-4 text-base"
+                >
+                  <Upload className="h-5 w-5" />
+                  <span className="brand-body">Importar KML/KMZ</span>
+                </button>
+
+                <button
+                  onClick={exportKML}
+                  className="brand-button-primary flex w-full items-center justify-center gap-3 rounded-xl p-4 text-base"
+                >
+                  <Download className="h-5 w-5" />
+                  <span className="brand-body">Exportar Proyecto</span>
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Overlay para cerrar panel */}
+      {showBottomPanel && (
+        <div
+          className="fixed inset-0 z-30 bg-black/20"
+          onClick={() => setShowBottomPanel(false)}
+          style={{ bottom: '60vh' }}
+        />
+      )}
+
+      {/* Modal de bienvenida móvil */}
       {showWelcome && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
-          <div className="brand-card-elegant w-full max-w-lg rounded-2xl p-8">
-            <div className="space-y-6 text-center">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-6">
+            <div className="space-y-4 text-center">
               {/* Logo y branding */}
-              <div className="mb-6 flex items-center justify-center gap-4">
-                <div className="brand-map-icon scale-75"></div>
+              <div className="mb-4 flex items-center justify-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-land-secondary">
+                  <div className="h-4 w-4 rounded-full bg-land-primary"></div>
+                </div>
                 <div className="text-left">
-                  <h1 className="brand-title-main text-xl font-bold text-land-primary">
+                  <h1 className="brand-title-main text-lg font-bold text-land-primary">
                     THE LAND BUSINESS
                   </h1>
-                  <p className="brand-subtitle text-sm text-land-secondary">
+                  <p className="brand-subtitle text-xs text-land-secondary">
                     TULUM
                   </p>
                 </div>
               </div>
 
-              <h2 className="brand-title-main text-2xl font-bold text-land-primary">
-                Map Editor Pro
+              <h2 className="brand-title-main text-xl font-bold text-land-primary">
+                Map Editor Mobile
               </h2>
 
-              <p className="brand-body text-land-tertiary">
-                Editor profesional de mapas KML con herramientas avanzadas
-                similares a Google Earth Pro
+              <p className="brand-body text-sm text-land-tertiary">
+                Editor profesional de mapas KML optimizado para dispositivos
+                móviles
               </p>
 
-              <div className="space-y-4 rounded-xl bg-land-light/50 p-4 text-left">
-                <div className="flex items-center gap-4">
-                  <Globe className="h-6 w-6 flex-shrink-0 text-land-primary" />
-                  <span className="brand-body text-sm text-land-primary">
-                    Vista satelital de alta resolución
+              <div className="space-y-3 rounded-xl bg-land-light/50 p-4 text-left">
+                <div className="flex items-center gap-3">
+                  <Globe className="h-5 w-5 flex-shrink-0 text-land-primary" />
+                  <span className="brand-body text-xs text-land-primary">
+                    Vista satelital táctil
                   </span>
                 </div>
-                <div className="flex items-center gap-4">
-                  <Upload className="h-6 w-6 flex-shrink-0 text-land-primary" />
-                  <span className="brand-body text-sm text-land-primary">
-                    Importa y organiza archivos KML/KMZ
+                <div className="flex items-center gap-3">
+                  <Upload className="h-5 w-5 flex-shrink-0 text-land-primary" />
+                  <span className="brand-body text-xs text-land-primary">
+                    Importa archivos KML/KMZ
                   </span>
                 </div>
-                <div className="flex items-center gap-4">
-                  <Edit3 className="h-6 w-6 flex-shrink-0 text-land-primary" />
-                  <span className="brand-body text-sm text-land-primary">
-                    Herramientas de dibujo profesionales
+                <div className="flex items-center gap-3">
+                  <Edit3 className="h-5 w-5 flex-shrink-0 text-land-primary" />
+                  <span className="brand-body text-xs text-land-primary">
+                    Herramientas táctiles
                   </span>
                 </div>
-                <div className="flex items-center gap-4">
-                  <Ruler className="h-6 w-6 flex-shrink-0 text-land-primary" />
-                  <span className="brand-body text-sm text-land-primary">
-                    Medición de distancias y áreas
+                <div className="flex items-center gap-3">
+                  <Ruler className="h-5 w-5 flex-shrink-0 text-land-primary" />
+                  <span className="brand-body text-xs text-land-primary">
+                    Medición precisa
                   </span>
                 </div>
               </div>
 
               <p className="brand-body text-xs text-land-tertiary">
-                Funcionalidades avanzadas: organización en carpetas, propiedades
-                de capas, herramientas de medición
+                Usa el menú ☰ para acceder a todas las funciones
               </p>
 
               <button
                 onClick={() => setShowWelcome(false)}
-                className="brand-button-primary w-full rounded-xl p-4 text-lg"
+                className="brand-button-primary w-full rounded-xl p-4 text-base"
               >
                 <span className="brand-body font-medium">Comenzar</span>
               </button>
