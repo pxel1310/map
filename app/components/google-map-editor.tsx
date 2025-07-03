@@ -1,13 +1,13 @@
-"use client"
+'use client'
 
-import { useEffect, useRef, useState } from "react"
-import { Loader } from "@googlemaps/js-api-loader"
+import { useEffect, useRef, useState } from 'react'
+import { Loader } from '@googlemaps/js-api-loader'
 
 interface MapLayer {
   id: string
   name: string
   visible: boolean
-  type: "kml" | "drawing"
+  type: 'kml' | 'drawing'
   data?: any
   kmlLayer?: any
 }
@@ -19,7 +19,12 @@ interface GoogleMapEditorProps {
   onLayersChange: (layers: MapLayer[]) => void
 }
 
-export default function GoogleMapEditor({ layers, selectedTool, onToolChange, onLayersChange }: GoogleMapEditorProps) {
+export default function GoogleMapEditor({
+  layers,
+  selectedTool,
+  onToolChange,
+  onLayersChange,
+}: GoogleMapEditorProps) {
   const mapRef = useRef<HTMLDivElement>(null)
   const [map, setMap] = useState<any>(null)
   const [isLoaded, setIsLoaded] = useState(false)
@@ -29,9 +34,9 @@ export default function GoogleMapEditor({ layers, selectedTool, onToolChange, on
   useEffect(() => {
     const initMap = async () => {
       const loader = new Loader({
-        apiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "",
-        version: "weekly",
-        libraries: ["drawing", "geometry"],
+        apiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
+        version: 'weekly',
+        libraries: ['drawing', 'geometry'],
       })
 
       try {
@@ -44,9 +49,9 @@ export default function GoogleMapEditor({ layers, selectedTool, onToolChange, on
             mapTypeId: google.maps.MapTypeId.SATELLITE,
             styles: [
               {
-                featureType: "all",
-                elementType: "labels",
-                stylers: [{ visibility: "on" }],
+                featureType: 'all',
+                elementType: 'labels',
+                stylers: [{ visibility: 'on' }],
               },
             ],
             mapTypeControl: true,
@@ -81,30 +86,30 @@ export default function GoogleMapEditor({ layers, selectedTool, onToolChange, on
               icon: {
                 path: google.maps.SymbolPath.CIRCLE,
                 scale: 8,
-                fillColor: "#668969",
+                fillColor: '#668969',
                 fillOpacity: 1,
-                strokeColor: "#344b49",
+                strokeColor: '#344b49',
                 strokeWeight: 2,
               },
             },
             polygonOptions: {
-              fillColor: "#668969",
+              fillColor: '#668969',
               fillOpacity: 0.3,
-              strokeColor: "#344b49",
+              strokeColor: '#344b49',
               strokeWeight: 2,
               draggable: true,
               editable: true,
             },
             circleOptions: {
-              fillColor: "#668969",
+              fillColor: '#668969',
               fillOpacity: 0.3,
-              strokeColor: "#344b49",
+              strokeColor: '#344b49',
               strokeWeight: 2,
               draggable: true,
               editable: true,
             },
             polylineOptions: {
-              strokeColor: "#344b49",
+              strokeColor: '#344b49',
               strokeWeight: 3,
               draggable: true,
               editable: true,
@@ -115,16 +120,20 @@ export default function GoogleMapEditor({ layers, selectedTool, onToolChange, on
           drawingManagerRef.current = drawingManager
 
           // Event listeners para dibujo
-          google.maps.event.addListener(drawingManager, "overlaycomplete", (event: any) => {
-            console.log("Overlay created:", event.type)
-            onToolChange("select")
-          })
+          google.maps.event.addListener(
+            drawingManager,
+            'overlaycomplete',
+            (event: any) => {
+              console.log('Overlay created:', event.type)
+              onToolChange('select')
+            },
+          )
 
           setMap(mapInstance)
           setIsLoaded(true)
         }
       } catch (error) {
-        console.error("Error loading Google Maps:", error)
+        console.error('Error loading Google Maps:', error)
       }
     }
 
@@ -151,11 +160,10 @@ export default function GoogleMapEditor({ layers, selectedTool, onToolChange, on
     if (!map || !isLoaded || !window.google) return
 
     const updatedLayers = layers.map((layer) => {
-      if (layer.type === "kml" && layer.data && !layer.kmlLayer) {
+      if (layer.type === 'kml' && layer.data && !layer.kmlLayer) {
         try {
           // Crear un blob URL para el contenido KML
           const url = layer.dataUrl // Asegúrate de tener una URL válida y accesible públicamente
-
 
           const kmlLayer = new window.google.maps.KmlLayer({
             url: url,
@@ -165,12 +173,16 @@ export default function GoogleMapEditor({ layers, selectedTool, onToolChange, on
           })
 
           // Event listener para errores de KML
-          window.google.maps.event.addListener(kmlLayer, "status_changed", () => {
-            const status = kmlLayer.getStatus()
-            if (status !== window.google.maps.KmlLayerStatus.OK) {
-              console.error("KML Layer error:", status)
-            }
-          })
+          window.google.maps.event.addListener(
+            kmlLayer,
+            'status_changed',
+            () => {
+              const status = kmlLayer.getStatus()
+              if (status !== window.google.maps.KmlLayerStatus.OK) {
+                console.error('KML Layer error:', status)
+              }
+            },
+          )
 
           if (layer.visible) {
             kmlLayer.setMap(map)
@@ -178,7 +190,7 @@ export default function GoogleMapEditor({ layers, selectedTool, onToolChange, on
 
           return { ...layer, kmlLayer }
         } catch (error) {
-          console.error("Error creating KML layer:", error)
+          console.error('Error creating KML layer:', error)
           return layer
         }
       }
@@ -200,11 +212,11 @@ export default function GoogleMapEditor({ layers, selectedTool, onToolChange, on
       if (!originalLayer) return true
 
       return (
-          updatedLayer.id !== originalLayer.id ||
-          updatedLayer.name !== originalLayer.name ||
-          updatedLayer.visible !== originalLayer.visible ||
-          updatedLayer.type !== originalLayer.type ||
-          (!originalLayer.kmlLayer && updatedLayer.kmlLayer) // Nueva capa KML creada
+        updatedLayer.id !== originalLayer.id ||
+        updatedLayer.name !== originalLayer.name ||
+        updatedLayer.visible !== originalLayer.visible ||
+        updatedLayer.type !== originalLayer.type ||
+        (!originalLayer.kmlLayer && updatedLayer.kmlLayer) // Nueva capa KML creada
       )
     })
 
@@ -214,13 +226,15 @@ export default function GoogleMapEditor({ layers, selectedTool, onToolChange, on
   }, [map, layers, isLoaded, onLayersChange])
 
   return (
-      <div className="w-full h-full relative">
-        <div ref={mapRef} className="w-full h-full" />
-        {!isLoaded && (
-            <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-              <div className="text-white text-lg brand-text">Cargando mapa satelital...</div>
-            </div>
-        )}
-      </div>
+    <div className="relative h-full w-full">
+      <div ref={mapRef} className="h-full w-full" />
+      {!isLoaded && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+          <div className="brand-text text-lg text-white">
+            Cargando mapa satelital...
+          </div>
+        </div>
+      )}
+    </div>
   )
 }
